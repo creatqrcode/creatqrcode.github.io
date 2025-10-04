@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>QRForge — Free QR Code Generator (PNG & SVG)</title>
+  <meta name="description" content="QRForge — fast, privacy-first QR code generator. Create static QR codes (URL, text, Wi-Fi, SMS, email), customize colors & style, add logo and download PNG/SVG." />
+  <meta name="robots" content="index,follow" />
+  <link rel="icon" href="data:,">
+  <style>
+    /* Palette inspired by leading QR sites but original */
+    :root{
+      --bg:#f7fafc;
+      --card:#ffffff;
+      --muted:#6b7280;
+      --text:#0f172a;
+      --accent:#2563eb;
+      --accent-600:#1e40af;
+      --glass: rgba(255,255,255,0.6);
+      --danger:#ef4444;
+      --success:#10b981;
+    }
+    html,body{height:100%}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg); color:var(--text); margin:0; -webkit-font-smoothing:antialiased}
+    .wrap{max-width:1150px;margin:20px auto;padding:18px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#3b82f6);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .title{font-weight:700;font-size:18px}
+    .tag{font-size:12px;color:var(--muted)}
+    nav{display:flex;gap:12px;align-items:center}
+    nav a{color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:8px;font-size:14px}
+    nav a.active{color:var(--accent);background:rgba(37,99,235,0.06);font-weight:600}
+    .hero{margin-top:18px;display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(12,18,31,0.04)}
+    h1{margin:0;font-size:20px}
+    p.lead{color:var(--muted);margin:8px 0 14px}
+    .controls{display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:#0b1220}
+    input[type=text], textarea, select, input[type=number]{
+      width:100%;padding:10px;border:1px solid #e6eef8;border-radius:10px;font-size:14px;background:#fff;
+    }
+    textarea{min-height:90px;resize:vertical}
+    .row{display:flex;gap:10px}
+    .row .col{flex:1}
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#fff;cursor:pointer;font-weight:600}
+    .btn.ghost{background:transparent;border:1px solid #e6eef8;color:var(--text);font-weight:600}
+    .options{display:flex;gap:8px;flex-wrap:wrap}
+    .option{padding:8px 12px;border-radius:8px;background:#f8fafc;border:1px solid #eef4ff;cursor:pointer;font-size:14px}
+    .option.active{background:linear-gradient(90deg,var(--accent),#3b82f6);color:#fff;border:0}
+    /* preview column */
+    .preview-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .preview-box{background:linear-gradient(180deg,#fff,#fbfdff);border-radius:12px;padding:14px;border:1px solid #eef4ff;display:flex;align-items:center;justify-content:center;min-width:300px;min-height:300px}
+    .meta{font-size:13px;color:var(--muted)}
+    .tools-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+    .tool-card{background:#fff;border-radius:10px;padding:12px;border:1px solid #f1f5f9}
+    footer{margin-top:28px;color:var(--muted);text-align:center;font-size:13px}
+    /* responsive */
+    @media (max-width:980px){.hero{grid-template-columns:1fr}.preview-box{min-width:100%;min-height:240px}}
+    /* accessibility visual helpers */
+    .sr-only{position:absolute;left:-9999px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">QF</div>
+        <div>
+          <div class="title">QRForge</div>
+          <div class="tag">Fast • Private • Client-side</div>
+        </div>
+      </div>
+      <nav>
+        <a href="#/" class="navlink active">Generator</a>
+        <a href="#/tools" class="navlink">Tools</a>
+        <a href="#/howto" class="navlink">How-To</a>
+        <a href="#/faq" class="navlink">FAQ</a>
+        <a href="#/privacy" class="navlink">Privacy</a>
+        <a href="#/contact" class="navlink">Contact</a>
+      </nav>
+    </header>
+
+    <main id="view">
+      <!-- content injected by router -->
+    </main>
+
+    <footer>© <span id="year"></span> QRForge — Built for privacy. No tracking by default.</footer>
+  </div>
+
+  <!-- Templates -->
+  <template id="tpl-generator">
+    <div class="card hero">
+      <div>
+        <h1>Create a free QR Code</h1>
+        <p class="lead">Generate high-quality QR codes instantly in your browser. Choose type, style, colors, add an optional logo and download PNG or SVG.</p>
+
+        <div class="card" style="padding:12px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <div class="option active" data-type="url">URL</div>
+            <div class="option" data-type="text">Text</div>
+            <div class="option" data-type="wifi">Wi-Fi</div>
+            <div class="option" data-type="sms">SMS</div>
+            <div class="option" data-type="email">Email</div>
+            <div class="option" data-type="phone">Phone</div>
+          </div>
+
+          <div id="formsArea" style="margin-top:12px">
+            <div data-form="url">
+              <label for="inputUrl">Enter URL</label>
+              <input id="inputUrl" type="text" placeholder="https://example.com" value="https://example.com">
+            </div>
+
+            <div data-form="text" style="display:none">
+              <label for="inputText">Enter Text</label>
+              <textarea id="inputText" placeholder="Any text..."></textarea>
+            </div>
+
+            <div data-form="wifi" style="display:none">
+              <label>SSID</label><input id="wifiSSID" type="text" placeholder="Network name">
+              <label style="margin-top:8px">Password</label><input id="wifiPass" type="text" placeholder="Password">
+              <label style="margin-top:8px">Encryption</label>
+              <select id="wifiEnc"><option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">None</option></select>
+            </div>
+
+            <div data-form="sms" style="display:none">
+              <label>Phone</label><input id="smsPhone" type="text" placeholder="+1 555 555 5555">
+              <label style="margin-top:8px">Message</label><textarea id="smsMsg"></textarea>
+            </div>
+
+            <div data-form="email" style="display:none">
+              <label>To</label><input id="emailTo" type="text" placeholder="name@example.com">
+              <label style="margin-top:8px">Subject</label><input id="emailSub" type="text">
+              <label style="margin-top:8px">Body</label><textarea id="emailBody"></textarea>
+            </div>
+
+            <div data-form="phone" style="display:none">
+              <label>Phone number</label><input id="phoneNum" type="text" placeholder="+1 555 555 5555">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
+            <div style="width:120px">
+              <label>Size</label>
+              <select id="sizeSel"><option value="100">100px</option><option value="200">200px</option><option value="1000">1000px</option><option value="2000">2000px</option><option value="custom">Custom</option></select>
+            </div>
+            <div id="sizeCustomWrap" style="display:none;width:120px">
+              <label>Custom px</label>
+              <input id="sizeCustom" type="number" min="64" max="4000" value="512">
+            </div>
+            <div style="width:140px">
+              <label>Error correction</label>
+              <select id="ecSel"><option value="M">M</option><option value="L">L</option><option value="Q">Q</option><option value="H">H</option></select>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label class="small" style="margin:0 6px 0 0">Foreground</label>
+              <input id="fgColor" type="color" value="#111827">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <label class="small" style="margin:0 6px 0 0">Background</label>
+              <input id="bgColor" type="color" value="#ffffff">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <label class="small" style="margin:0">Logo (optional)</label>
+            <input id="logoFile" type="file" accept="image/png,image/jpeg,image/svg+xml">
+            <label style="display:flex;gap:6px;align-items:center;margin-left:6px"><input id="transparentBG" type="checkbox"> Transparent background</label>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button id="genBtn" class="btn">Generate QR</button>
+            <button id="dlPng" class="btn ghost">Download PNG</button>
+            <button id="dlSvg" class="btn ghost">Download SVG</button>
+            <button id="clearBtn" class="btn ghost">Clear</button>
+          </div>
+
+          <div class="small muted" style="margin-top:8px">Tip: For best results keep logo &lt;20% of QR size. This generator runs fully in your browser for privacy.</div>
+        </div>
+
+        <div style="margin-top:12px" class="card">
+          <h3 style="margin:0 0 6px 0">Why choose QRForge?</h3>
+          <ul class="small muted">
+            <li>Client-side generation — we don't send your content to servers unless you export there.</li>
+            <li>PNG & SVG support — SVG recommended for print & scalability.</li>
+            <li>Multiple content types (URL, Text, Wi-Fi, SMS, Email, Phone).</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="preview-wrap card">
+        <div class="preview-box" id="previewBox">
+          <div class="muted">Preview will appear here</div>
+        </div>
+        <div class="meta" id="previewMeta">—</div>
+        <div style="display:flex;gap:8px">
+          <button id="copyBtn" class="btn ghost">Copy to clipboard</button>
+          <button id="shareBtn" class="btn ghost">Share (web share)</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-tools">
+    <div class="card">
+      <h2 style="margin:0">Tools</h2>
+      <p class="muted">A growing set of small, fast, browser tools.</p>
+      <div class="tools-grid">
+        <div class="tool-card"><strong>QR Code Generator</strong><div class="muted">PNG & SVG, logo</div></div>
+        <div class="tool-card"><strong>JSON Formatter</strong><div class="muted">Pretty print JSON</div></div>
+        <div class="tool-card"><strong>Image Compressor</strong><div class="muted">Lossy & lossless</div></div>
+        <div class="tool-card"><strong>Case Converter</strong><div class="muted">Upper / lower / title case</div></div>
+        <div class="tool-card"><strong>Password Generator</strong><div class="muted">Secure passwords</div></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-howto">
+    <div class="card">
+      <h2>How to create & use QR Codes</h2>
+      <ol>
+        <li>Choose content type and fill details.</li>
+        <li>Customize colors, style and size.</li>
+        <li>Generate and test with your phone camera before printing.</li>
+      </ol>
+      <h3>SEO & ranking tips for tools sites</h3>
+      <ul>
+        <li>Single page per tool with descriptive title & meta description.</li>
+        <li>Use long-tail keywords like "free online qr generator png svg".</li>
+        <li>Structured data (FAQ, HowTo) helps rich snippets.</li>
+      </ul>
+    </div>
+  </template>
+
+  <template id="tpl-faq">
+    <div class="card">
+      <h2>FAQ</h2>
+      <dl>
+        <dt>Is QRForge free?</dt>
+        <dd class="muted">Yes — core generator is free and runs in your browser.</dd>
+        <dt>Do you store my content?</dt>
+        <dd class="muted">No — by default everything is client-side unless you opt-in to server features.</dd>
+        <dt>Which formats can I download?</dt>
+        <dd class="muted">PNG and SVG.</dd>
+      </dl>
+    </div>
+  </template>
+
+  <template id="tpl-privacy">
+    <div class="card">
+      <h2>Privacy</h2>
+      <p class="muted">We respect your privacy. Default behaviour is client-side generation. If you enable server-based export or analytics, we'll inform you clearly.</p>
+    </div>
+  </template>
+
+  <template id="tpl-contact">
+    <div class="card">
+      <h2>Contact</h2>
+      <p class="muted">For support or enterprise integrations, contact us.</p>
+      <form id="contactForm">
+        <label>Name</label><input id="cname" required>
+        <label>Email</label><input id="cemail" type="email" required>
+        <label>Message</label><textarea id="cmsg" required></textarea>
+        <div style="margin-top:12px"><button class="btn" type="submit">Send</button> <button type="button" id="mailtoBtn" class="btn ghost">Open mail app</button></div>
+        <div id="cres" class="muted" style="margin-top:8px"></div>
+      </form>
+    </div>
+  </template>
+
+  <!-- QR library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+  <script>
+    // small router
+    const routes = {
+      '/': document.getElementById('tpl-generator').content,
+      '/tools': document.getElementById('tpl-tools').content,
+      '/howto': document.getElementById('tpl-howto').content,
+      '/faq': document.getElementById('tpl-faq').content,
+      '/privacy': document.getElementById('tpl-privacy').content,
+      '/contact': document.getElementById('tpl-contact').content
+    };
+
+    function navigate(){
+      const path = location.hash.replace('#','') || '/';
+      const frag = routes[path] || routes['/'];
+      const view = document.getElementById('view');
+      view.innerHTML = '';
+      view.appendChild(document.importNode(frag,true));
+      document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+      const link = document.querySelector('nav a[href="#'+path+'"]');
+      if(link) link.classList.add('active');
+      bindPage(path);
+    }
+    window.addEventListener('hashchange', navigate);
+    window.addEventListener('load', ()=>{ document.getElementById('year').textContent = new Date().getFullYear(); navigate(); });
+
+    // Page-specific bindings
+    function bindPage(path){
+      if(path === '/') bindGenerator();
+      if(path === '/contact') bindContact();
+    }
+
+    function bindGenerator(){
+      // options and forms
+      const options = document.querySelectorAll('.option');
+      const forms = document.querySelectorAll('[data-form]');
+      options.forEach(opt=>{
+        opt.addEventListener('click', ()=>{
+          options.forEach(o=>o.classList.remove('active'));
+          opt.classList.add('active');
+          forms.forEach(f=>f.style.display = f.getAttribute('data-form') === opt.getAttribute('data-type') ? 'block' : 'none');
+        });
+      });
+
+      const sizeSel = document.getElementById('sizeSel');
+      const sizeCustomWrap = document.getElementById('sizeCustomWrap');
+      sizeSel.addEventListener('change', ()=>{ sizeCustomWrap.style.display = sizeSel.value==='custom' ? 'block' : 'none'; });
+
+      const genBtn = document.getElementById('genBtn');
+      const previewBox = document.getElementById('previewBox');
+      const previewMeta = document.getElementById('previewMeta');
+      const dlPng = document.getElementById('dlPng');
+      const dlSvg = document.getElementById('dlSvg');
+      const copyBtn = document.getElementById('copyBtn');
+      const shareBtn = document.getElementById('shareBtn');
+
+      function getActiveContent(){
+        const active = document.querySelector('.option.active').getAttribute('data-type');
+        if(active === 'url') return document.getElementById('inputUrl').value.trim();
+        if(active === 'text') return document.getElementById('inputText').value.trim();
+        if(active === 'wifi'){
+          const s = document.getElementById('wifiSSID').value.trim();
+          const p = document.getElementById('wifiPass').value.trim();
+          const e = document.getElementById('wifiEnc').value;
+          return `WIFI:T:${e};S:${s};P:${p};;`;
+        }
+        if(active === 'sms'){
+          const n = document.getElementById('smsPhone').value.trim();
+          const m = document.getElementById('smsMsg').value.trim();
+          return `SMSTO:${n}:${m}`;
+        }
+        if(active === 'email'){
+          const to = document.getElementById('emailTo').value.trim();
+          const sub = document.getElementById('emailSub').value.trim();
+          const body = document.getElementById('emailBody').value.trim();
+          return `MATMSG:TO:${to};SUB:${sub};BODY:${body};;`;
+        }
+        if(active === 'phone') return 'TEL:' + (document.getElementById('phoneNum').value.trim() || '');
+        return '';
+      }
+
+      function getSizeValue(){
+        const v = sizeSel.value;
+        if(v === 'custom') return parseInt(document.getElementById('sizeCustom').value) || 512;
+        return parseInt(v);
+      }
+
+      async function generate(){
+        const content = getActiveContent();
+        if(!content){ alert('Please add content'); return; }
+        const size = getSizeValue();
+        const ec = document.getElementById('ecSel').value;
+        const fg = document.getElementById('fgColor').value;
+        const bgElem = document.getElementById('bgColor');
+        const transparent = document.getElementById('transparentBG').checked;
+        const bg = transparent ? 'transparent' : (bgElem.value || '#ffffff');
+
+        previewBox.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        // draw base QR
+        QRCode.toCanvas(canvas, content, {errorCorrectionLevel:ec, width:size, margin:1, color:{dark:fg, light:bg}}, (err)=>{
+          if(err){ console.error(err); alert('Error generating QR'); return; }
+          previewBox.appendChild(canvas);
+          previewMeta.textContent = `${size} × ${size} px • EC=${ec} • ${transparent ? 'transparent BG' : 'bg '+bg}`;
+          // handle logo overlay
+          const logoFile = document.getElementById('logoFile');
+          if(logoFile.files && logoFile.files[0]){
+            const img = new Image();
+            img.onload = ()=>{
+              const ctx = canvas.getContext('2d');
+              const maxLogo = Math.floor(size * 0.2);
+              const ratio = Math.min(maxLogo / img.width, maxLogo / img.height, 1);
+              const w = img.width * ratio;
+              const h = img.height * ratio;
+              ctx.drawImage(img, (size - w)/2, (size - h)/2, w, h);
+            };
+            img.src = URL.createObjectURL(logoFile.files[0]);
+          }
+        });
+      }
+
+      genBtn.addEventListener('click', generate);
+
+      dlPng.addEventListener('click', ()=>{
+        const c = previewBox.querySelector('canvas'); if(!c){ alert('Generate first'); return; }
+        const a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = 'qrforge.png'; a.click();
+      });
+
+      dlSvg.addEventListener('click', ()=>{
+        const content = getActiveContent();
+        if(!content){ alert('Generate first'); return; }
+        const size = getSizeValue();
+        QRCode.toString(content, {type:'svg', width:size, errorCorrectionLevel: document.getElementById('ecSel').value}, (err, svgStr)=>{
+          if(err){ alert('SVG generation error'); console.error(err); return; }
+          // optionally inject logo into SVG - for simplicity we download the base svg
+          const blob = new Blob([svgStr], {type:'image/svg+xml'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); a.href = url; a.download = 'qrforge.svg'; a.click(); URL.revokeObjectURL(url);
+        });
+      });
+
+      copyBtn.addEventListener('click', async ()=>{
+        const c = previewBox.querySelector('canvas'); if(!c){ alert('Generate first'); return; }
+        c.toBlob(async (blob)=>{
+          try{
+            await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+            alert('Image copied to clipboard');
+          }catch(e){ alert('Clipboard not supported in this browser'); }
+        });
+      });
+
+      shareBtn.addEventListener('click', async ()=>{
+        const c = previewBox.querySelector('canvas'); if(!c){ alert('Generate first'); return; }
+        if(navigator.canShare && navigator.canShare()){
+          c.toBlob(async (blob)=>{
+            const file = new File([blob],'qr.png',{type:'image/png'});
+            try{ await navigator.share({files:[file],title:'QR Code',text:'QR generated with QRForge'}); }catch(e){ console.warn(e); alert('Share canceled or not supported'); }
+          });
+        }else{ alert('Web Share API not supported on this device/browser'); }
+      });
+
+      // generate default on load
+      setTimeout(generate, 350);
+    }
+
+    // contact
+    function bindContact(){
+      const form = document.getElementById('contactForm');
+      const mailtoBtn = document.getElementById('mailtoBtn');
+      const cres = document.getElementById('cres');
+      form.addEventListener('submit',(e)=>{
+        e.preventDefault();
+        cres.textContent = 'Preparing mail client...';
+        const name = document.getElementById('cname').value.trim();
+        const email = document.getElementById('cemail').value.trim();
+        const msg = document.getElementById('cmsg').value.trim();
+        const mailto = `mailto:contact@example.com?subject=${encodeURIComponent('Contact from '+name)}&body=${encodeURIComponent(msg + '\\n\\nFrom: '+email)}`;
+        window.location.href = mailto;
+      });
+      mailtoBtn.addEventListener('click', ()=> window.location.href = 'mailto:contact@example.com');
+    }
+  </script>
+</body>
+</html>
